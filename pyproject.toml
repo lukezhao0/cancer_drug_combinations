@@ -1,0 +1,20 @@
+[project]
+name = "combo-agent"
+version = "0.1.0"
+description = "Literature- and in-silico-informed agent for selecting cancer drug-combination experiments"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=3.1.0",
+    "sheldon",
+]
+
+[project.scripts]
+combo-agent = "combo_agent.run:main"
+
+[build-system]
+requires = ["uv_build>=0.9.2,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+sheldon = { git = "https://github.com/stanford-oval/sheldon", rev = "7fbf027d1fb414443612d4ad2661b396c8352cd3" }
