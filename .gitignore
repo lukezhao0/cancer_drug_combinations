@@ -1,7 +1,11 @@
 .venv/
 __pycache__/
-data/
-workshop/
+/data/
+/workshop/
+/data_cache/
+/runs/
+/.cache/
+.pytest_cache/
 
 .DS_Store
 *.env

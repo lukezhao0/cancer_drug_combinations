@@ -5,7 +5,10 @@ description = "Literature- and in-silico-informed agent for selecting cancer dru
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "numpy>=2.4.6",
     "pandas>=3.1.0",
+    "pyarrow>=26.0.1",
+    "rdkit>=2026.9.1",
     "sheldon",
 ]
 
@@ -18,3 +21,8 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 sheldon = { git = "https://github.com/stanford-oval/sheldon", rev = "7fbf027d1fb414443612d4ad2661b396c8352cd3" }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
