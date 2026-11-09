@@ -1,0 +1,152 @@
+{
+  "heldout_fraction": 0.2,
+  "heldout_lines": [
+    "CVCL_0023",
+    "CVCL_0207",
+    "CVCL_0292",
+    "CVCL_1051",
+    "CVCL_1056",
+    "CVCL_1092",
+    "CVCL_1286",
+    "CVCL_1304",
+    "CVCL_1381",
+    "CVCL_1689",
+    "CVCL_1779"
+  ],
+  "heldout_names": [
+    "786-O",
+    "A-498",
+    "A-549",
+    "BT-549",
+    "CCRF-CEM",
+    "HCT 15",
+    "HOP-92",
+    "IGROV-1",
+    "LOX-IMVI",
+    "SF268",
+    "UACC-257"
+  ],
+  "hit_quantile": 0.95,
+  "ineligible_lines": [
+    "HL-60(TB)",
+    "NCI-H322M",
+    "SNB-19",
+    "SR",
+    "U-251MG"
+  ],
+  "not_in_m1": "seed sets and famous/obscure labels are M2 (design \u00a75.2-5.3, gap analysis \u00a72.11)",
+  "per_lineage": {
+    "Bowel": {
+      "eligible": 7,
+      "heldout": [
+        "HCT 15"
+      ],
+      "ineligible": [],
+      "lines": 7,
+      "quota": 1
+    },
+    "Breast": {
+      "eligible": 5,
+      "heldout": [
+        "BT-549"
+      ],
+      "ineligible": [],
+      "lines": 5,
+      "quota": 1
+    },
+    "CNS/Brain": {
+      "eligible": 4,
+      "heldout": [
+        "SF268"
+      ],
+      "ineligible": [
+        "SNB-19",
+        "U-251MG"
+      ],
+      "lines": 6,
+      "quota": 1
+    },
+    "Kidney": {
+      "eligible": 8,
+      "heldout": [
+        "786-O",
+        "A-498"
+      ],
+      "ineligible": [],
+      "lines": 8,
+      "quota": 2
+    },
+    "Lung": {
+      "eligible": 7,
+      "heldout": [
+        "A-549",
+        "HOP-92"
+      ],
+      "ineligible": [
+        "NCI-H322M"
+      ],
+      "lines": 8,
+      "quota": 2
+    },
+    "Lymphoid": {
+      "eligible": 3,
+      "heldout": [
+        "CCRF-CEM"
+      ],
+      "ineligible": [
+        "SR"
+      ],
+      "lines": 4,
+      "quota": 1
+    },
+    "Myeloid": {
+      "eligible": 1,
+      "heldout": [],
+      "ineligible": [
+        "HL-60(TB)"
+      ],
+      "lines": 2,
+      "quota": 0
+    },
+    "Ovary/Fallopian Tube": {
+      "eligible": 6,
+      "heldout": [
+        "IGROV-1"
+      ],
+      "ineligible": [],
+      "lines": 6,
+      "quota": 1
+    },
+    "Pleura": {
+      "eligible": 1,
+      "heldout": [],
+      "ineligible": [],
+      "lines": 1,
+      "quota": 0
+    },
+    "Prostate": {
+      "eligible": 2,
+      "heldout": [],
+      "ineligible": [],
+      "lines": 2,
+      "quota": 0
+    },
+    "Skin": {
+      "eligible": 8,
+      "heldout": [
+        "LOX-IMVI",
+        "UACC-257"
+      ],
+      "ineligible": [],
+      "lines": 8,
+      "quota": 2
+    }
+  },
+  "seed": 0,
+  "thresholds": {
+    "computed_on": "selectable experiments",
+    "n_selectable": 219239,
+    "y_inh": 62.9453,
+    "y_syn": 9.2989
+  }
+}

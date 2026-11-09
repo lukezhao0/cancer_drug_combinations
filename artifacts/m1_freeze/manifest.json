@@ -1,0 +1,117 @@
+{
+  "inputs": {
+    "cell_features": {
+      "path": "data_cache/interim/features/cell_features.parquet",
+      "sha256": "1d96a0bf2e903e7813e678ef4bdd9bd872dd8cf2aa3cf21a69310a165c885611"
+    },
+    "cells": {
+      "path": "data_cache/interim/features/cells.parquet",
+      "sha256": "57a21ce54eaaf9153695a2f9bdd21f92851c8f345377b31ccca0eebc03334860"
+    },
+    "drug_features": {
+      "path": "data_cache/interim/features/drug_features.parquet",
+      "sha256": "75f207c20587e80de027da29c1bd389b42a60b7754d92ea26a554448fe3a56a8"
+    },
+    "drugs": {
+      "path": "data_cache/interim/drugs.parquet",
+      "sha256": "b2dbb36ad7b0859706df3596fe4283ca1154852809b98374855e7141a3ef7128"
+    },
+    "experiments": {
+      "path": "data_cache/interim/experiments.parquet",
+      "sha256": "b3b25546c8d9a57d07fd0ea6764a0c6ed98ee2b9699161df15661d11e39561ed"
+    },
+    "experiments_report": {
+      "path": "data_cache/interim/experiments_report.json",
+      "sha256": "b956906ee29281e78607d61048705692ec8002a02fd41c01bb5ac3cc7f0c313c"
+    },
+    "features_report": {
+      "path": "data_cache/interim/features/features_report.json",
+      "sha256": "4a582c4108b1ffcdef2c3547f2c79679eacd001366fa190d74fc8d51d6240501"
+    },
+    "self_pairs": {
+      "path": "data_cache/interim/self_pairs.parquet",
+      "sha256": "85d166021aaf44989270d571bd9bc4a89163f0634523239bc6915c3340dd5b6b"
+    }
+  },
+  "outputs": {
+    "cells": {
+      "file": "cells.parquet",
+      "sha256": "4b6bdf65a46d1911c2e30247a01e4365f9375928aa4fc593c839d18d77e1e15a"
+    },
+    "data_card": {
+      "file": "data_card.md",
+      "sha256": "fd552487b61932864d31d01d5d4c9962408e9f433c7e5f7c163a94650e2e9841"
+    },
+    "drugs": {
+      "file": "drugs.parquet",
+      "sha256": "7d24832b9a9827d4c68cedfa7bbfc70fd3c25084ee859c075cc8a509b735b673"
+    },
+    "freeze_report": {
+      "file": "freeze_report.json",
+      "sha256": "7468a6100671b2c46fce5642a7e0f58e7804e7e80dc1075a63f15e79f9e58056"
+    },
+    "labels": {
+      "file": "labels.parquet",
+      "sha256": "60c653bf7f82b9f7e92532206e3840c53312bad41aa5cd29880da719c975a9d4"
+    },
+    "pool": {
+      "file": "pool.parquet",
+      "sha256": "15ac957700a4bb1282c006024fd776ee726f159b1ccda4c6e62ae851731ac475"
+    },
+    "self_pairs": {
+      "file": "self_pairs.parquet",
+      "sha256": "85d166021aaf44989270d571bd9bc4a89163f0634523239bc6915c3340dd5b6b"
+    },
+    "splits": {
+      "file": "splits.json",
+      "sha256": "b5d2a751f660821f820712a7ed533877bf3fb4fe4ef397077e8d3075d7611903"
+    }
+  },
+  "raw_manifests": {
+    "cellminer": {
+      "nci60_DNA__Combined_aCGH_gene_summary.zip": {
+        "bytes": 6201518,
+        "cellminer_db_version": "2.16",
+        "sha256": "ca4a6e225d5e52e49872837577c548436cd5ad2b7dfff1f062f8e88470dde664",
+        "url": "https://discover.nci.nih.gov/cellminer/download/processeddataset/nci60_DNA__Combined_aCGH_gene_summary.zip"
+      },
+      "nci60_DNA__Exome_Seq_AA_changing.zip": {
+        "bytes": 3340008,
+        "cellminer_db_version": "2.16",
+        "sha256": "49f06f4ec6c826f3b7bdbf943fdc2fb59ed83b5bd8b1299378f183634760dd20",
+        "url": "https://discover.nci.nih.gov/cellminer/download/processeddataset/nci60_DNA__Exome_Seq_AA_changing.zip"
+      },
+      "nci60_DNA__Exome_Seq_Protein_function_affecting.zip": {
+        "bytes": 2161150,
+        "cellminer_db_version": "2.16",
+        "sha256": "72e863cdc02b2b9b5ca027da901d4090443e1f9372da7aaea20c3fd46b3f27bb",
+        "url": "https://discover.nci.nih.gov/cellminer/download/processeddataset/nci60_DNA__Exome_Seq_Protein_function_affecting.zip"
+      },
+      "nci60_RNA__5_Platform_Gene_Transcript_Average_z_scores.zip": {
+        "bytes": 14901997,
+        "cellminer_db_version": "2.16",
+        "sha256": "dd5462ed76765639242420309f63823c50517e9a4870b622aaca7f3195bd571a",
+        "url": "https://discover.nci.nih.gov/cellminer/download/processeddataset/nci60_RNA__5_Platform_Gene_Transcript_Average_z_scores.zip"
+      },
+      "nci60_RNA__RNA_seq_composite_expression.zip": {
+        "bytes": 12227495,
+        "cellminer_db_version": "2.16",
+        "sha256": "47712a4d9149fcb9b8650952e1c0a4a322eb7ee258784197f7d8766cf59e871e",
+        "url": "https://discover.nci.nih.gov/cellminer/download/processeddataset/nci60_RNA__RNA_seq_composite_expression.zip"
+      }
+    },
+    "tdc": {
+      "drugcomb_nci60.pkl": {
+        "bytes": 36394069,
+        "downloaded_on": "2026-11-08",
+        "sha256": "c0e195c943d5a238e27e0a3e389c4637f9ac0212309c250f9d823b7196ad00bf",
+        "url": "https://dataverse.harvard.edu/api/access/datafile/4215720"
+      }
+    }
+  },
+  "versions": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "python": "3.13.5"
+  }
+}
