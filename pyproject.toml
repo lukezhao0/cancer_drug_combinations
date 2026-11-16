@@ -9,6 +9,7 @@ dependencies = [
     "pandas>=3.1.0",
     "pyarrow>=26.0.1",
     "rdkit>=2026.9.1",
+    "scipy>=1.17.1",
     "sheldon",
 ]
 

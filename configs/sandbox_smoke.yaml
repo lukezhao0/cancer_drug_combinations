@@ -1,0 +1,17 @@
+# Smoke run for the in-silico tools: three mechanism questions, tools + Python sandbox only.
+#   uv run combo-agent run -c configs/sandbox_smoke.yaml
+benchmark: combo-mechanism
+method: sheldon
+engine: toolloop
+split: eval
+limit: 1
+seed: 0
+max_rounds: 2
+max_calls: 30
+max_usd: 1.0
+concurrency: 1
+tag: sandbox-smoke
+params:
+  # No generic probes: web_search / web_fetch are unavailable on Gemini, and run_shell could read
+  # the data cache. The benchmark supplies run_python and the lookup tools itself.
+  probes: []
