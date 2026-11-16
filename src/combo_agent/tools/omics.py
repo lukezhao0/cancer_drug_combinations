@@ -73,9 +73,8 @@ def get_cell(store: FeatureStore, line: str) -> dict[str, Any]:
     ac = store.resolve_line(line)
     row = store.cells.loc[ac]
     mutated = [g for g in store.mutation_genes if row[f"mut_{g}"] == 1]
-    cn_genes = [c[3:] for c in store.cells.columns if c.startswith("cn_") and not c.startswith("cn_missing_")]
     gains, losses = [], []
-    for g in cn_genes:
+    for g in store.copy_number_genes:
         value = store.copy_number(g).at[ac]
         if pd.notna(value) and value >= rules.CN_GAIN_MIN:
             gains.append(g)

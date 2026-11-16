@@ -65,7 +65,7 @@ class GuardedPythonProbe(PythonProbe):
 def python_context(store: FeatureStore) -> dict[str, Any]:
     """JSON-serialisable feature tables for the sandbox. Built only from allowlisted tables."""
     cells = store.cells
-    cn_genes = [c[3:] for c in cells.columns if c.startswith("cn_") and not c.startswith("cn_missing_")]
+    cn_genes = store.copy_number_genes
     cn = {g: store.copy_number(g) for g in cn_genes}
     cell_records = [
         {
@@ -79,8 +79,7 @@ def python_context(store: FeatureStore) -> dict[str, Any]:
         }
         for ac, row in cells.iterrows()
     ]
-    expr_cols = [c for c in cells.columns if c.startswith("expr_")]
-    expr = {c[5:]: [round(float(v), 3) for v in cells[c]] for c in expr_cols}
+    expr = {g: [round(float(v), 3) for v in cells[f"expr_{g}"]] for g in store.expression_feature_genes}
     targets = store.drug_targets
     drug_records = []
     for drug_id, row in store.drugs.iterrows():

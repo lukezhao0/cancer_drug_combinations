@@ -37,7 +37,7 @@ def store(tmp_path: Path) -> FeatureStore:
         "expression_imputed": [int(r[1] == "SR") for r in LINES], "mutation_from_parent": 0,
         "mut_KRAS": [r[4] for r in LINES], "mut_PTEN": [r[5] for r in LINES],
         "cn_PTEN": [0.0 if np.isnan(r[6]) else r[6] for r in LINES], "cn_MYC": [r[7] for r in LINES],
-        "cn_missing_PTEN": [int(np.isnan(r[6])) for r in LINES],
+        "cn_missing_PTEN": [int(np.isnan(r[6])) for r in LINES], "cn_source": "cellminer",
         "expr_EGFR": [r[8] for r in LINES],
     })
     drugs = pd.DataFrame({

@@ -103,11 +103,29 @@ class FeatureStore:
         elif f"{prefix}{gene}" in self.cells.columns:
             s = self.cells[f"{prefix}{gene}"]
         else:
-            known = sorted(self._wide_columns[table]) or [
-                c[len(prefix):] for c in self.cells.columns if c.startswith(prefix)
-            ]
+            known = sorted(self._wide_columns[table]) or self._feature_genes(prefix)
             raise ToolError(f"no {table.replace('_', ' ')} data for gene {gene!r}{_did_you_mean(gene, known)}")
         return s.reindex(self.cells.index).astype(float).rename(gene)
+
+    def _feature_genes(self, prefix: str) -> list[str]:
+        """Genes with a numeric `<prefix><GENE>` model-feature column in the cells table.
+
+        The table also carries metadata under the same prefixes (`cn_source` is text, `cn_missing_*`
+        are flags), so a prefix match alone is not a gene.
+        """
+        return [c[len(prefix):] for c in self.cells.columns
+                if c.startswith(prefix) and not c.startswith(f"{prefix}missing_")
+                and pd.api.types.is_numeric_dtype(self.cells[c])]
+
+    @cached_property
+    def copy_number_genes(self) -> list[str]:
+        """Genes with a copy-number model feature in the cells table."""
+        return self._feature_genes("cn_")
+
+    @cached_property
+    def expression_feature_genes(self) -> list[str]:
+        """Genes with an expression model feature in the cells table (the most variable genes)."""
+        return self._feature_genes("expr_")
 
     def expression(self, gene: str) -> pd.Series:
         """log2(FPKM+1) of one gene, indexed by line."""
