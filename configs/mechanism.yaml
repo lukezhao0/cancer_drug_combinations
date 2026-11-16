@@ -1,0 +1,26 @@
+benchmark: combo-mechanism-data
+method: sheldon
+engine: toolloop
+model: gemini-3.5-flash-lite
+provider: openai
+split: eval
+tasks: mek-pi3k
+limit: 1
+seed: 0
+max_rounds: 2
+max_calls: 30
+max_usd: 1.0
+max_seconds: 300
+concurrency: 1
+cache: false
+resume: false
+trace_prompts: true
+tag: mechanism-test
+params:
+  probes: []
+  offer_tools: false
+  plan: false # Keep feature data in every stage rather than summarizing it away.
+  n_initial: 2
+  n_explore: 1
+  select_k: 2
+  candidate_analysis_max_evals: 1
