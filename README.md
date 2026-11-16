@@ -53,10 +53,16 @@ SHELDON_DATA=./data
 - **Gemini** (default): use the base URL above with a Gemini API key.
 - **Any OpenAI-compatible endpoint**: change `OPENAI_BASE_URL` and the key.
 
+### Model Choices
+
+Verified on 11.16 that these models are available for our API key:
+
+- `gemini-3.5-flash-lite` for testing/development ($0.30 / $2.50 per mtok)
+- `gemini-4-hydrogen` for reported results ($1.50 / $7.50 per mtok)
+
 ### Check the install
 
 ```bash
-uv run sheldon smoke
 uv run combo-agent ls  # Lists benchmarks, methods and engines
 ```
 
