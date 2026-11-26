@@ -182,8 +182,9 @@ def test_only_tools_with_a_backend_and_an_implementation_are_offered(store):
     names = [t.name for t in registry.offered({"features": store})]
     assert names == ["get_drug", "get_cell", "find_lines", "gene_expression", "drug_targets_in_line", "shared_targets"]
     assert registry.offered({}) == []
-    assert registry.offered({"model": object(), "oracle": object(), "literature": object()}) == []
-    assert {t.name for t in registry.pending()} == {"query_model", "resolve", "get_history", "search_literature"}
+    assert registry.offered({"model": object(), "oracle": object()}) == []
+    assert [t.name for t in registry.offered({"literature": object()})] == ["search_literature"]
+    assert {t.name for t in registry.pending()} == {"query_model", "resolve", "get_history"}
 
 
 def test_probes_run_and_report_bad_input_without_raising(store):
@@ -239,8 +240,22 @@ def _all_outputs(store: FeatureStore) -> str:
     return json.dumps(out, default=str)
 
 
+#: Mann-Whitney p-values (from expression only) are printed to 3 significant figures, e.g.
+#: `p = 0.00219`. The hidden labels hold ~85k distinct 3-decimal values, which cover almost every
+#: number in [-1, 1], so p-values match by chance. They are masked before the scan.
+_P_VALUE = re.compile(r'(p = |"mann_whitney_p": )-?\d+(?:\.\d+)?(?:e-?\d+)?')
+
+
 def _label_matches(text: str, labels: set[str]) -> set[str]:
+    text = _P_VALUE.sub(r"\1<p>", text)
     return {m for m in re.findall(r"-?\d+\.\d{3}", text) if m in labels}
+
+
+def test_leak_scan_masks_p_values_but_still_catches_labels():
+    labels = {"0.002", "12.345"}
+    assert not _label_matches('Mann-Whitney p = 0.00219, "mann_whitney_p": 0.00219', labels)
+    assert _label_matches('"median_true": 12.345, p = 0.5', labels) == {"12.345"}
+    assert _label_matches("value 0.002", labels) == {"0.002"}
 
 
 # -- real data ------------------------------------------------------------------------------------

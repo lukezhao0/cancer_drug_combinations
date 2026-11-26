@@ -15,6 +15,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from combo_agent.literature import retrieval
 from combo_agent.tools import omics, rules
 
 BACKENDS = ("features", "model", "oracle", "literature")
@@ -80,8 +81,14 @@ TOOLS: tuple[ToolSpec, ...] = (
              ("drug_a", "drug_b"), "model"),
     ToolSpec("get_history", "Results of experiments already run in this campaign (revealed results only).",
              {"drug": _s("Optional. " + _DRUG), "rule": _s("Optional. " + _RULE)}, (), "oracle"),
-    ToolSpec("search_literature", "Search paper abstracts for mechanism evidence, after the leakage filter.",
-             {"query": _s("Search query.")}, ("query",), "literature"),
+    ToolSpec("search_literature",
+             "Search PubMed titles and abstracts for mechanism evidence. Papers that report or reanalyse "
+             "the screen this campaign's results come from are withheld by a leakage filter, and every "
+             "call is logged.",
+             {"query": _s("PubMed query, e.g. 'MEK inhibitor PI3K feedback KRAS mutant'."),
+              "k": {"type": "integer", "minimum": 1, "maximum": retrieval.MAX_K,
+                    "description": f"Optional: number of abstracts (default {retrieval.DEFAULT_K})."}},
+             ("query",), "literature", retrieval.search_literature),
 )
 
 assert all(t.needs in BACKENDS for t in TOOLS)
