@@ -1,5 +1,9 @@
 # Handoff: M1 (data and pool) complete
 
+> **Superseded for current status (2026-11-26):** M2–M5 are built. Read
+> [`HANDOFF-m2-m5.md`](HANDOFF-m2-m5.md) and [`project-notes/known-issues.md`](project-notes/known-issues.md).
+> This file remains the reference for the M1 data pipeline.
+
 | | |
 |:--|:--|
 | **Date** | 2026-11-08 |

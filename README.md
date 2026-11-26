@@ -3,8 +3,10 @@
 CS 224V project: an agent that combines literature evidence and in-silico experiments to choose
 cancer drug-combination experiments. Built on [SHELDON](https://github.com/stanford-oval/sheldon).
 
-**New here? Read [`docs/HANDOFF.md`](docs/HANDOFF.md) first.** It covers the goal, what's been built,
-the decisions taken and the next steps.
+**New here? Read [`docs/HANDOFF-m2-m5.md`](docs/HANDOFF-m2-m5.md) first** (current state, and where
+the agent plugs in), then [`docs/project-notes/known-issues.md`](docs/project-notes/known-issues.md).
+**Anyone building the agent must follow the "Agent-builder rules" at the top of the known-issues file.**
+The M1 handoff, [`docs/HANDOFF.md`](docs/HANDOFF.md), covers the data pipeline.
 
 ## The goal in one paragraph
 
@@ -24,10 +26,18 @@ The full specification is in [`docs/target_design.md`](docs/target_design.md).
 |:--|:--|
 | M0 Scaffolding (package, CLI, SHELDON pin) | ✅ |
 | **M1 Data and pool** | ✅ **Done**: 272,357 experiments (4,939 drug pairs × 57 cell lines, 101 drugs), features, held-out split, hit thresholds, frozen |
-| M2 Oracle and splits (seed sets, famous/obscure labels) | ⬜ next |
-| M3 Response model · M4 Baselines · M5 Retrieval and leakage filter · M6 Agent · M7 Explanations · M8 Full grid and report | ⬜ |
+| **M2 Oracle and splits** | ✅ **Done**: `Oracle` (budget, batch, held-out and re-run refusals), 10 seed sets of 32, famous/middle/obscure pair labels from PubMed, label-access test |
+| **M3 Response model** | ✅ **Done. The main surrogate is a Gaussian process** (`models/gp.py`; default since 2026-11-26): Tanimoto drug-pair kernel × cell kernel. Over 5 seeds it finds about 3× the ensemble's killing hits with every BO rule, and its error bars are honest; synergy is a tie. See [`gp-surrogate.md`](docs/project-notes/gp-surrogate.md). The first model, a 5-network ensemble, is the **legacy build** (`models/legacy/`, git tag `ensemble-v1`) |
+| **M4 Baselines and runner** | ✅ **Run, gate passed**: 5 selectors (random, greedy, uncertainty, diverse `bo_ucb`, MC `bo_qei`), 100 campaigns. `bo_ucb` finds 3–4× more hits than random at 320; `greedy` is strongest. Report: `runs/m4_main/report.md` (made with the **legacy ensemble**). With the GP (seeds 0–4), `bo_ucb` finds 94.0 synergy / 202.2 killing hits at 320 vs 16.2 / 15.2 for random. **Numbers provisional:** fix the GP prior scaling and `bo_qei` (known-issues C4, D1), then rerun the M4 grid with the GP before agent comparisons |
+| **M5 Retrieval and leakage filter** | ✅ **Built**: `search_literature` with a 6-rule leakage filter, a 607-PMID blocklist and a per-call audit log; gate test set 23/23 leaky papers blocked. Memory probe: the LLM shows no memory of synergy results (ρ −0.05) |
+| M7 Explanations · M8 Full grid and report | ⬜ |
+| M6 Agent | 🟨 in-silico lookup tools built (`src/combo_agent/tools/`); agent loop not started |
 
-Summary of M1, with figures: [`docs/project-notes/m1-freeze-and-splits.md`](docs/project-notes/m1-freeze-and-splits.md).
+Summaries: M1 [`docs/project-notes/m1-freeze-and-splits.md`](docs/project-notes/m1-freeze-and-splits.md) ·
+M2 [`docs/project-notes/m2-oracle.md`](docs/project-notes/m2-oracle.md) ·
+M3 [`docs/project-notes/m3-response-model.md`](docs/project-notes/m3-response-model.md) ·
+M4 [`docs/project-notes/m4-baselines.md`](docs/project-notes/m4-baselines.md) ·
+M5 [`docs/project-notes/m5-literature.md`](docs/project-notes/m5-literature.md).
 
 ## Setup
 
@@ -84,7 +94,13 @@ tar -xzf ~/Downloads/m1-data-v1.tgz -C ~/Downloads
 mkdir -p data_cache && cp -R ~/Downloads/m1-data-v1/data_cache/. data_cache/
 ```
 
-Inside the bundle: `README.md` (quick start), `DATA_DICTIONARY.md` (every column),
+**M2/M5 add-on (needed for the oracle's seed sets and the leakage filter):** `m2m5-addon-v1.tgz`
+(sha256 `610d3862af31fa1bb7b7d5c3870ad6fe6b1cabe038dc4cdda88d11c858614e15`), same Drive folder. Install
+it after `m1-data-v1`; the steps are in [`docs/HANDOFF-m2-m5.md`](docs/HANDOFF-m2-m5.md) §6. The
+optional `m2m5-addon-v1_api_cache.tgz` (`507909a9b5f826cad7dcb0dafad981d2a1835c31b3782cc70890747ab64e0a66`)
+holds the PubMed responses for offline rebuilds.
+
+Inside the M1 bundle: `README.md` (quick start), `DATA_DICTIONARY.md` (every column),
 `SPLITS_AND_HITS.md`, `CAVEATS.md` and `PROVENANCE.md`. The same docs are in
 [`docs/data-bundle/`](docs/data-bundle/). To rebuild the bundle from a built pool, run
 `uv run python scripts/make_data_bundle.py --with-api-cache`.
@@ -126,8 +142,15 @@ All data lives in `data_cache/`, which git ignores. Every download is pinned by 
    COMBO_INTEGRATION=1 COMBO_OFFLINE=1 uv run pytest -q -k real
    ```
 
-**`data_cache/processed/labels.parquet` holds the hidden outcomes. Only the oracle (M2) may read
-it.** Read the caveats in the M1 summary before using the data. In particular, SR's expression is
+5. **M2 (seed sets and pair fame):** `uv run python -m combo_agent.lab.splits` writes
+   `data_cache/processed/m2/`. It queries PubMed (about 5,000 counts). Put `NCBI_API_KEY=...` in
+   `.env` for 10 requests/s instead of 3; the key never enters the cache. Add `--offline` to rebuild
+   from `data_cache/raw/api_cache/pubmed/`. Check against
+   [`artifacts/m2/manifest.json`](artifacts/m2/manifest.json).
+
+**`data_cache/processed/labels.parquet` holds the hidden outcomes. Only the oracle
+(`combo_agent.lab.oracle`) and the build/evaluation code allowlisted in
+`tests/test_label_access.py` may read it.** Read the caveats in the M1 summary before using the data. In particular, SR's expression is
 imputed, and synergy results are reported with and without the `syn_hit_low_kill` hits.
 
 ## CLI
@@ -145,12 +168,23 @@ uv run combo-agent --help
 ```
 src/combo_agent/
   run.py                 # Entry point to run the SHELDON CLI
-  benchmark.py           # combo-mechanism benchmark (stub; M2+)
+  benchmark.py           # combo-mechanism benchmark (smoke harness for the tools)
+  mechanism.py           # combo-mechanism-data benchmark (features in the prompt, no tools)
   data/                  # M1 data pipeline, steps 1a-1g (see docs/HANDOFF.md)
-    curated/             # hand-reviewed mapping tables the pipeline reads
+    curated/             # hand-reviewed tables (drug synonyms, cell lines, PubMed terms)
+  lab/                   # M2: oracle.py (the simulated lab), splits.py (seed sets, pair fame)
+  models/                # M3: gp.py (the default surrogate), surrogate.py (interface), prediction.py;
+                         #     legacy/ (the first surrogate, a 5-network ensemble, kept to reproduce old runs)
+  selectors/             # M4: baseline selectors (random, greedy, uncertainty, bo_ucb, bo_qei)
+  eval/                  # M4: campaign runner (resumable grids) and metrics/statistics; M5 probe scoring
+  literature/            # M5: PubMed client, leakage filter, search_literature, memory probe
+  tools/                 # in-silico lookup tools for the agent (label-free)
 tests/                   # unit tests, plus real-data tests (COMBO_INTEGRATION=1)
-scripts/                 # drug-identity audit, M1 figures, data-bundle builder
+scripts/                 # drug-identity audit, M1 and M4 figures, data-bundle builder
 artifacts/m1_freeze/     # frozen split, data card and manifest (small, tracked)
+artifacts/m2/            # seed sets, M2 card and manifest (small, tracked)
+artifacts/m3/            # response-model calibration report (small, tracked)
+artifacts/m5/            # memory-probe report (small, tracked)
 docs/
   HANDOFF.md             # start here
   CHANGELOG.md           # what changed, when

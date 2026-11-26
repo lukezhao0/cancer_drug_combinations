@@ -95,11 +95,20 @@ class FeatureStore:
             out[table] = frozenset(pq.read_schema(p).names) - {LINE_KEY} if p.exists() else frozenset()
         return out
 
+    @cached_property
+    def _wide_tables(self) -> dict[str, pd.DataFrame]:
+        """The gene-level tables, read once (57 lines x ~23k genes, ~11 MB each).
+
+        Reading one column of these files still parses the ~23k-column footer (~0.5 s per call),
+        so per-gene reads made `get_cell` (31 copy-number genes) take ~7 s. One full read is ~1 s.
+        """
+        return {table: self._read(table).set_index(LINE_KEY)
+                for table in ("expression", "copy_number") if self._wide_columns[table]}
+
     def _gene_column(self, table: str, prefix: str, gene: str) -> pd.Series:
         """One gene's values for every line: from the full table, else the model-feature columns."""
         if gene in self._wide_columns[table]:
-            df = self._read(table, columns=[LINE_KEY, gene])
-            s = df.set_index(LINE_KEY)[gene]
+            s = self._wide_tables[table][gene]
         elif f"{prefix}{gene}" in self.cells.columns:
             s = self.cells[f"{prefix}{gene}"]
         else:
