@@ -1,0 +1,8 @@
+pmid,short,role,block_citers,year,title,why
+28446463,NCI-ALMANAC,source,1,2017,"The National Cancer Institute ALMANAC: A Comprehensive Screening Resource for the Detection of Anticancer Drug Pairs with Enhanced Therapeutic Activity.","Produced every pool experiment (the pool is NCI-ALMANAC only, M1 data card)"
+26983881,O'Neil,source,1,2016,"An Unbiased Oncology Compound Screen to Identify Novel Combination Strategies.","Second TDC DrugComb screen; removed from the pool in M1 (decision 13) but shares drugs and the reanalysis literature"
+31066443,DrugComb,source,1,2019,"DrugComb: an integrative cancer drug combination data portal.","Portal that redistributes NCI-ALMANAC with Bliss/ZIP/Loewe/HSA scores, the labels we use"
+34060634,DrugComb-update,source,1,2021,"DrugComb update: a more comprehensive drug sensitivity data repository and analysis portal.","Same portal, second release"
+31209238,AZ-DREAM,source,1,2019,"Community assessment to advance computational prediction of cancer drug combinations in a pharmacogenomic screen.","Combination-prediction benchmark named in design section 10; its citers are synergy-prediction papers"
+29253077,DeepSynergy,reanalysis,1,2018,"DeepSynergy: predicting anti-cancer drug synergy with Deep Learning.","Reanalysis of O'Neil; the root of the synergy-prediction literature that trains on these screens"
+16990858,NCI60-review,panel,0,2006,"The NCI60 human tumour cell line anticancer drug screen.","Panel the pool's lines come from; blocked itself, but its 1,224 citers are mostly single-agent work and are not blocked"
