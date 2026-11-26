@@ -1,4 +1,5 @@
-"""Gaussian-process surrogate: an alternative to the 5-network ensemble (models/response_model.py).
+"""Gaussian-process surrogate: the DEFAULT surrogate for every campaign. It replaced the 5-network
+ensemble (now `models/legacy/ensemble.py`) on 2026-11-26; see docs/project-notes/gp-surrogate.md.
 
 A Gaussian process (GP) is a prior over functions. Two experiments that are similar under a
 *kernel* (a similarity rule) get correlated outcomes. After seeing data, the GP's guess at an
@@ -63,7 +64,7 @@ from scipy.linalg import cho_solve, solve_triangular
 from combo_agent.data import paths
 from combo_agent.lab.oracle import KEY, Result, Triplet
 from combo_agent.models.features import _numeric, _pca
-from combo_agent.models.response_model import Prediction
+from combo_agent.models.prediction import Prediction
 
 TARGETS = ("syn", "inh")
 CELL_PCS = 16

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from combo_agent.lab.oracle import KEY, Result, Triplet
-from combo_agent.models.response_model import Prediction
+from combo_agent.models.prediction import Prediction
 from combo_agent.models.surrogate import Surrogate
 
 TARGETS = ("syn", "inh")
@@ -22,7 +22,7 @@ class SelectionContext:
 
     candidates  untested, selectable experiments (pool rows: keys and metadata, no outcomes)
     history     every revealed result so far (seed set first)
-    model       the shared surrogate (ensemble or GP), refit on `history` this round (None for
+    model       the shared surrogate (the GP by default; the legacy ensemble on request), refit on `history` this round (None for
                 model-free selectors)
     pred        the model's prediction for every row of `candidates`, in the same order (or None)
     """

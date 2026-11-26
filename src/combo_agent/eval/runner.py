@@ -22,11 +22,14 @@ Run a preset grid:
     python -m combo_agent.eval.runner --grid pilot --out runs/m4_pilot
     python -m combo_agent.eval.runner --grid main  --out runs/m4_main  [--workers 2]
 
-Presets: `pilot` (5 selectors x 2 targets x seeds 0-1, compact features), `main` (5 x 2 x seeds
-0-9, full features), `ablation` (bo_ucb beta and diversity variants, seeds 0-9, full features),
-`gpcompare` (the 5 model-based selectors x 2 targets x seeds 0-4).
+Presets: `pilot` (5 selectors x 2 targets x seeds 0-1), `main` (5 x 2 x seeds 0-9), `ablation`
+(bo_ucb beta and diversity variants, seeds 0-9), `gpcompare` (the 5 model-based selectors x 2
+targets x seeds 0-4). A preset's `mode` (full / compact features) applies to the legacy ensemble
+only; the GP always uses its own features (`models/gp.py:GPFeatures`).
 
-`--surrogate {ensemble,gp}` picks the response model (default: the ensemble). Model-based
+`--surrogate {gp,ensemble}` picks the response model. **Default: the Gaussian process.** The
+ensemble is the legacy build (`models/legacy/`); `runs/m4_main` was made with it, so reproduce that
+grid with `--surrogate ensemble`. Model-based
 campaigns also write `<run_id>.preds.parquet`: per-round predictions for the batch and a fixed
 probe set, for calibration diagnostics (eval/diagnostics.py).
 
@@ -54,11 +57,13 @@ import pandas as pd
 from combo_agent.data import paths
 from combo_agent.lab.oracle import KEY, Oracle, Result
 from combo_agent.eval.diagnostics import DistanceSpace, probe_keys, round_records
-from combo_agent.models.features import FeatureSet
 from combo_agent.models.gp import GPFeatures
+from combo_agent.models.legacy.ensemble_features import FeatureSet
 from combo_agent.models.surrogate import SURROGATES, make_surrogate
 from combo_agent.selectors import SelectionContext, make
 from combo_agent.selectors.base import TARGETS
+
+DEFAULT_SURROGATE = SURROGATES[0]  # "gp"; the ensemble is the legacy build
 
 MAIN = ("random", "greedy", "uncertainty", "bo_ucb", "bo_qei")
 ABLATION = ("bo_ucb", "bo_ucb_b1", "bo_ucb_b3", "bo_ucb_nodiv")
@@ -108,7 +113,7 @@ def _round_row(spec: CampaignSpec, oracle: Oracle, rnd: int, timings: dict) -> d
 
 def run_campaign(spec: CampaignSpec, features: FeatureSet | GPFeatures | None = None, model_kw: dict | None = None,
                  oracle_factory: Callable[..., Oracle] | None = None,
-                 log: Callable[[str], None] | None = None, surrogate: str = "ensemble",
+                 log: Callable[[str], None] | None = None, surrogate: str = DEFAULT_SURROGATE,
                  space: DistanceSpace | None = None,
                  diagnostics: list[pd.DataFrame] | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run one campaign; return (rounds, reveals) frames.
@@ -190,7 +195,7 @@ def _write_atomic(df: pd.DataFrame, path: Path) -> None:
 
 
 def run_one(spec: CampaignSpec, out: Path, mode: str, model_kw: dict | None = None,
-            features: FeatureSet | GPFeatures | None = None, oracle_factory=None, surrogate: str = "ensemble",
+            features: FeatureSet | GPFeatures | None = None, oracle_factory=None, surrogate: str = DEFAULT_SURROGATE,
             space: DistanceSpace | None = None, diagnostics: bool = True) -> str:
     """Run a campaign unless its rounds file exists; write reveals (and diagnostics), then rounds.
 
@@ -230,7 +235,7 @@ def _sha(p: Path) -> str | None:
     return hashlib.sha256(p.read_bytes()).hexdigest() if p.exists() else None
 
 
-def write_manifest(out: Path, grid: dict, mode: str, model_kw: dict, surrogate: str = "ensemble") -> None:
+def write_manifest(out: Path, grid: dict, mode: str, model_kw: dict, surrogate: str = DEFAULT_SURROGATE) -> None:
     proc = paths.processed_dir()
     manifest = {
         "grid": {k: list(v) if isinstance(v, tuple) else v for k, v in grid.items()}, "mode": mode,
@@ -261,7 +266,7 @@ def _worker(args):
 
 def run_grid(out: Path, selectors, targets, seeds, mode: str, model_kw: dict | None = None,
              workers: int = 1, budget: int = 320, batch_size: int = 16, log=print,
-             surrogate: str = "ensemble") -> None:
+             surrogate: str = DEFAULT_SURROGATE) -> None:
     if surrogate not in SURROGATES:
         raise ValueError(f"surrogate must be one of {SURROGATES}")
     model_kw = dict(model_kw or {})
@@ -293,13 +298,14 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--grid", choices=sorted(GRIDS), required=True)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--mode", choices=["full", "compact"], default=None, help="override the preset's features")
+    ap.add_argument("--mode", choices=["full", "compact"], default=None,
+                    help="override the preset's features (legacy ensemble only; ignored by the GP)")
     ap.add_argument("--seeds", type=_seeds, default=None, help="e.g. 0-9 or 0,3,5")
     ap.add_argument("--selectors", nargs="+", default=None)
     ap.add_argument("--targets", nargs="+", choices=list(TARGETS), default=None)
     ap.add_argument("--workers", type=int, default=1)
-    ap.add_argument("--surrogate", choices=list(SURROGATES), default="ensemble",
-                    help="response model: the 5-network ensemble (default) or the Gaussian process")
+    ap.add_argument("--surrogate", choices=list(SURROGATES), default=DEFAULT_SURROGATE,
+                    help="response model: the Gaussian process (default) or the legacy 5-network ensemble")
     ap.add_argument("--budget", type=int, default=320)
     ap.add_argument("--batch-size", type=int, default=16)
     args = ap.parse_args(argv)

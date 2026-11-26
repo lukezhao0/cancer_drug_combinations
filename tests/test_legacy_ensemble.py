@@ -11,8 +11,8 @@ import pandas as pd
 import pytest
 
 from combo_agent.lab.oracle import KEY, Result, Triplet
-from combo_agent.models.features import FeatureSet
-from combo_agent.models.response_model import EnsembleModel, _MLP
+from combo_agent.models.legacy.ensemble_features import FeatureSet
+from combo_agent.models.legacy.ensemble import EnsembleModel, _MLP
 
 
 def _tables(n_drugs=12, n_lines=10, seed=0):

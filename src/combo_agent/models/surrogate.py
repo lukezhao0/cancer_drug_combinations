@@ -3,10 +3,12 @@
 A surrogate is a cheap stand-in for the lab. Refit on the revealed history each round, it gives a
 guess and an uncertainty for every untested experiment. Two implementations:
 
-    ensemble   models/response_model.py:EnsembleModel    5 small neural networks (the M3 model)
-    gp         models/gp.py:GPModel                       Gaussian process with a Tanimoto pair kernel
+    gp         models/gp.py:GPModel                          Gaussian process with a Tanimoto pair
+                                                             kernel: the DEFAULT for every campaign
+    ensemble   models/legacy/ensemble.py:EnsembleModel       5 small neural networks: the legacy M3
+                                                             model, kept to reproduce earlier runs
 
-Choose one with `--surrogate` on `python -m combo_agent.eval.runner`. The selectors only use the
+Choose one with `--surrogate` on `python -m combo_agent.eval.runner` (default: gp). The selectors only use the
 methods below, so they treat both the same way.
 
     fit(history)                              refit on oracle Results (revealed experiments only)
@@ -28,9 +30,9 @@ from typing import Protocol
 import numpy as np
 
 from combo_agent.lab.oracle import Result
-from combo_agent.models.response_model import Prediction
+from combo_agent.models.prediction import Prediction
 
-SURROGATES = ("ensemble", "gp")
+SURROGATES = ("gp", "ensemble")  # the first is the default
 
 
 class Surrogate(Protocol):
@@ -49,7 +51,7 @@ class Surrogate(Protocol):
 def make_surrogate(name: str, features=None, seed: int = 0, **kw) -> Surrogate:
     """A fresh, unfitted surrogate. `features` is a FeatureSet (ensemble) or GPFeatures (gp)."""
     if name == "ensemble":
-        from combo_agent.models.response_model import EnsembleModel
+        from combo_agent.models.legacy.ensemble import EnsembleModel
         return EnsembleModel(features, seed=seed, **kw)
     if name == "gp":
         from combo_agent.models.gp import GPModel

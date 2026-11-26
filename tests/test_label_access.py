@@ -17,7 +17,7 @@ ALLOWLIST = {
     "src/combo_agent/data/freeze_pool.py": "writes labels.parquet (M1 step 1g)",
     "src/combo_agent/lab/oracle.py": "the oracle: the only reader on the selector path",
     "src/combo_agent/lab/splits.py": "seed-set and pair-fame build: hit counts for the M2 card only",
-    "src/combo_agent/models/calibrate.py": "M3 calibration report (evaluation code, never imported by selectors)",
+    "src/combo_agent/models/legacy/calibrate.py": "M3 calibration report (evaluation code, never imported by selectors)",
     "src/combo_agent/eval/memory_probe.py": "M5 memory-probe scoring (evaluation code, run after the probe)",
     "src/combo_agent/eval/compare.py": "surrogate comparison: top-k recall and probe calibration (evaluation code)",
     "src/combo_agent/tools/store.py": "names it on the tools denylist",

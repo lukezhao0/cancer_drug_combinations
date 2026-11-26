@@ -13,9 +13,9 @@ from combo_agent.eval import metrics as mx
 from combo_agent.eval import runner as rn
 from combo_agent.lab.oracle import KEY, Oracle, Triplet
 from combo_agent.eval.diagnostics import DistanceSpace
-from combo_agent.models.features import FeatureSet
+from combo_agent.models.legacy.ensemble_features import FeatureSet
 from combo_agent.models.gp import GPFeatures, GPModel
-from combo_agent.models.response_model import EnsembleModel
+from combo_agent.models.legacy.ensemble import EnsembleModel
 from combo_agent.selectors import SELECTORS, SelectionContext, make
 from combo_agent.selectors.baselines import diverse_greedy, greedy_qei
 
@@ -117,7 +117,7 @@ def test_qei_prefers_the_dominant_candidate_and_hedges():
 def test_campaign_spends_budget_and_curves_are_monotone(world):
     for name in ("random", "bo_ucb", "bo_qei"):
         spec = rn.CampaignSpec(name, "syn", 0, budget=24, batch_size=8)
-        rounds, reveals = rn.run_campaign(spec, world["fs"], TINY, world["factory"])
+        rounds, reveals = rn.run_campaign(spec, world["fs"], TINY, world["factory"], surrogate="ensemble")
         assert rounds["n_charged"].tolist() == [0, 8, 16, 24]
         assert rounds["n_revealed"].iloc[-1] == 32 and len(reveals) == 32
         for col in ("hits_syn", "hits_inh", "hits_syn_strict", "hit_pairs_syn"):
@@ -130,11 +130,11 @@ def test_campaign_spends_budget_and_curves_are_monotone(world):
 
 def test_run_one_writes_atomically_and_resumes(world, tmp_path):
     spec = rn.CampaignSpec("greedy", "inh", 1, budget=16, batch_size=8)
-    msg = rn.run_one(spec, tmp_path, "compact", TINY, world["fs"], world["factory"])
+    msg = rn.run_one(spec, tmp_path, "compact", TINY, world["fs"], world["factory"], surrogate="ensemble")
     assert msg.startswith("done")
     files = sorted(p.name for p in (tmp_path / "runs").iterdir())
     assert files == ["greedy__inh__s1.parquet", "greedy__inh__s1.reveals.parquet"]
-    assert rn.run_one(spec, tmp_path, "compact", TINY, world["fs"], world["factory"]).startswith("skip")
+    assert rn.run_one(spec, tmp_path, "compact", TINY, world["fs"], world["factory"], surrogate="ensemble").startswith("skip")
 
 
 def test_ensemble_sample_and_similarity_match_the_original_selector_math(world):
@@ -172,11 +172,27 @@ def test_gp_campaign_with_diagnostics(world, tmp_path):
 
 def test_diagnostics_do_not_change_the_picks(world, tmp_path):
     spec = rn.CampaignSpec("bo_qei", "syn", 1, budget=16, batch_size=8)
-    _, plain = rn.run_campaign(spec, world["fs"], TINY, world["factory"])
+    _, plain = rn.run_campaign(spec, world["fs"], TINY, world["factory"], surrogate="ensemble")
     diag = []
-    _, logged = rn.run_campaign(spec, world["fs"], TINY, world["factory"], space=DistanceSpace(world["gfs"]),
+    _, logged = rn.run_campaign(spec, world["fs"], TINY, world["factory"], surrogate="ensemble", space=DistanceSpace(world["gfs"]),
                                 diagnostics=diag)
     assert plain.equals(logged) and len(diag) == 2
+
+
+def test_gp_is_the_default_surrogate():
+    """The GP is the main surrogate; the ensemble runs only when asked for (legacy build)."""
+    import inspect
+    assert rn.DEFAULT_SURROGATE == "gp"
+    for f in (rn.run_campaign, rn.run_one, rn.run_grid, rn.write_manifest):
+        assert inspect.signature(f).parameters["surrogate"].default == "gp", f.__name__
+    called = {}
+    orig = rn.run_grid
+    try:
+        rn.run_grid = lambda *a, **kw: called.update(kw)
+        rn.main(["--grid", "pilot", "--out", "unused"])
+    finally:
+        rn.run_grid = orig
+    assert called["surrogate"] == "gp"
 
 
 def test_seed_parser_and_presets():
@@ -214,7 +230,7 @@ def test_metrics_end_to_end_on_a_tiny_grid(world, tmp_path):
     for sel in ("random", "bo_ucb"):
         for seed in (0, 1, 2):
             rn.run_one(rn.CampaignSpec(sel, "inh", seed, budget=16, batch_size=8), tmp_path, "compact", TINY,
-                       world["fs"], world["factory"])
+                       world["fs"], world["factory"], surrogate="ensemble")
     fame = world["pool"][["drug_a", "drug_b"]].drop_duplicates().assign(fame="middle")
     fame_path = tmp_path / "fame.parquet"
     fame.to_parquet(fame_path, index=False)

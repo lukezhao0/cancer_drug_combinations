@@ -1,4 +1,6 @@
-"""The response model (target_design.md §6): a deep ensemble that predicts both outcomes with
+"""LEGACY BUILD (superseded by the Gaussian process, `models/gp.py`; old build tagged `ensemble-v1`).
+
+The first response model (target_design.md §6): a deep ensemble that predicts both outcomes with
 uncertainty, refit from scratch on a campaign's revealed history every round.
 
 Every selector uses the same model with the same settings, so differences between selectors come
@@ -33,14 +35,13 @@ line, then summed per experiment. This is exact (the layer is linear) and keeps 
 ~219k-candidate pool to seconds without building a ~5 GB input matrix.
 
 Implemented in numpy (no deep-learning dependency); gradients are verified against finite
-differences in `tests/test_response_model.py`.
+differences in `tests/test_legacy_ensemble.py`.
 """
 
 from __future__ import annotations
 
 import time
 from collections.abc import Sequence
-from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
@@ -48,43 +49,13 @@ import pandas as pd
 import scipy.sparse as sp
 
 from combo_agent.lab.oracle import KEY, Result, Triplet
-from combo_agent.models.features import FeatureSet
+from combo_agent.models.legacy.ensemble_features import FeatureSet
+from combo_agent.models.prediction import Prediction, cosine_similarity
 
 TARGETS = ("syn", "inh")
 CHUNK = 65_536
 Z80 = 1.2815515655446004  # standard-normal 90th percentile: the 80% interval is mean +- Z80 * std
 MIN_VAL_ROWS = 10
-
-
-@dataclass(frozen=True)
-class Prediction:
-    """Per-experiment predicted mean and std of both outcomes, in original units."""
-
-    mean_syn: np.ndarray
-    std_syn: np.ndarray
-    mean_inh: np.ndarray
-    std_inh: np.ndarray
-    # Optional split of `std` (the predictive std, which selectors use) into the model's own
-    # uncertainty about the mean ("latent") and the measurement-noise level. For diagnostics.
-    latent_std_syn: np.ndarray | None = None
-    noise_std_syn: np.ndarray | None = None
-    latent_std_inh: np.ndarray | None = None
-    noise_std_inh: np.ndarray | None = None
-
-    def mean(self, target: str) -> np.ndarray:
-        return self.mean_syn if target == "syn" else self.mean_inh
-
-    def std(self, target: str) -> np.ndarray:
-        return self.std_syn if target == "syn" else self.std_inh
-
-    def latent_std(self, target: str) -> np.ndarray | None:
-        return self.latent_std_syn if target == "syn" else self.latent_std_inh
-
-    def noise_std(self, target: str) -> np.ndarray | None:
-        return self.noise_std_syn if target == "syn" else self.noise_std_inh
-
-    def ucb(self, target: str, beta: float = 2.0) -> np.ndarray:
-        return self.mean(target) + beta * self.std(target)
 
 
 class ResponseModel(Protocol):
@@ -322,10 +293,3 @@ class EnsembleModel:
         """Similarity between experiments for the diversity penalty, as a function j -> column j:
         cosine of the member-averaged embeddings, centered over `experiments`."""
         return cosine_similarity(self.embed(experiments))
-
-
-def cosine_similarity(emb: np.ndarray):
-    """j -> cosine similarity of every row of `emb` to row j (rows centered, then L2-normalized)."""
-    e = emb - emb.mean(0)
-    e = e / np.maximum(np.linalg.norm(e, axis=1, keepdims=True), 1e-12)
-    return lambda j: e @ e[j]

@@ -31,7 +31,7 @@ import pandas as pd
 
 from combo_agent.lab.oracle import KEY, Result
 from combo_agent.models.gp import GPFeatures
-from combo_agent.models.response_model import Prediction
+from combo_agent.models.prediction import Prediction
 
 N_PROBE = 2000
 PROBE_SALT = 7_777

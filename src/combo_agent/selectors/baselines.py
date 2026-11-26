@@ -42,7 +42,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from combo_agent.lab.oracle import Triplet
-from combo_agent.models.response_model import cosine_similarity
+from combo_agent.models.prediction import cosine_similarity
 from combo_agent.selectors.base import TARGETS, SelectionContext, top_k
 
 SHORTLIST = 2000
