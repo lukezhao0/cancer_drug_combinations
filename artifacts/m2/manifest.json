@@ -1,0 +1,51 @@
+{
+  "built": "2026-11-23",
+  "inputs": {
+    "labels": {
+      "file": "labels.parquet",
+      "sha256": "60c653bf7f82b9f7e92532206e3840c53312bad41aa5cd29880da719c975a9d4"
+    },
+    "pool": {
+      "file": "pool.parquet",
+      "sha256": "15ac957700a4bb1282c006024fd776ee726f159b1ccda4c6e62ae851731ac475"
+    },
+    "terms": {
+      "file": "drug_pubmed_terms.csv",
+      "sha256": "a92c796fb1c69b8fc1a1ea13ed84316706d92202a32c5462f1826ff79f707aa1"
+    }
+  },
+  "outputs": {
+    "drug_pubmed": {
+      "file": "drug_pubmed.parquet",
+      "sha256": "a9fab03a3ba80fe545d565e18b6ce8f56f77708b10f05161769c0e7e4611bdcf"
+    },
+    "m2_card": {
+      "file": "m2_card.md",
+      "sha256": "8db6b19f35c81b0c847bc67392d739eb4789910475a5efab13e915184ce1cb69"
+    },
+    "pair_fame": {
+      "file": "pair_fame.parquet",
+      "sha256": "a293594839ac02b591eb77644f65fbcf1651b8fb79e7c84cf6bd535ad59ee47f"
+    },
+    "seed_sets": {
+      "file": "seed_sets.json",
+      "sha256": "0e8ade609123a13e8e244be87ffc49e5c5c6880a4a5e911ff398ef8954bd3e16"
+    }
+  },
+  "pubmed": {
+    "cancer_clause": "(neoplasms[mh] OR cancer*[tiab] OR tumor*[tiab] OR tumour*[tiab] OR carcinoma*[tiab] OR leukemia*[tiab] OR leukaemia*[tiab] OR lymphoma*[tiab] OR myeloma*[tiab] OR melanoma*[tiab] OR sarcoma*[tiab] OR glioma*[tiab])",
+    "fame": {
+      "fallback": false,
+      "famous_min_count": 22.0,
+      "q3_all_pairs": 22.0
+    },
+    "maxdate": "2026/11/01",
+    "requests_fetched": 0,
+    "requests_from_cache": 5040
+  },
+  "versions": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "python": "3.13.5"
+  }
+}
