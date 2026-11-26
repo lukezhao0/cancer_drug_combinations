@@ -4,6 +4,12 @@
 > [`../target_design.md`](../target_design.md) and the milestone notes. M2–M5 were pushed **as built**:
 > none of the issues below has been fixed yet. Each has an ID, a severity and the stage by which it
 > must be fixed. When you fix one, mark it here and in the CHANGELOG.
+>
+> **Surrogate update (2026-11-26).** The Gaussian process (`models/gp.py`) is now the default
+> surrogate; see [`gp-surrogate.md`](gp-surrogate.md). The 5-network ensemble is the legacy build
+> (`models/legacy/`, tag `ensemble-v1`).
+> - Issues that affect only the ensemble are marked **Legacy only**.
+> - GP issues: C4, C8 and the new **G1–G4**.
 
 ## What was confirmed to work
 
@@ -21,7 +27,7 @@ These were re-run or recomputed during the review, not just read.
 - **Every number in `runs/m4_main/report.md` recomputes** from the revealed experiments.
 - **The M5 leakage gate (23/23 blocked, 19/19 passed) reproduces offline**, and the blocklist
   rebuilds byte for byte.
-- **Tests pass:** `uv run pytest -q` gives 203 passed and 30 skipped, and the real-data tests
+- **Tests pass:** `uv run pytest -q` gives 204 passed and 30 skipped (after the GP-default change), and the real-data tests
   (`COMBO_INTEGRATION=1`) pass.
 
 ---
@@ -43,9 +49,14 @@ These were re-run or recomputed during the review, not just read.
    temperature, so the provider default applies.
 6. **In masked-name runs, turn `search_literature` off** (or map drug names to codes in its output).
    Abstracts contain the real names (E7).
-7. **Read the M4 baseline numbers as provisional.** The response model has known problems that
-   inflate its uncertainty on top candidates (C1, C2), and `bo_qei` aims at the wrong target (D1).
-   Fix these and rerun M4 before comparing the agent with the baselines.
+7. **Use the GP (the default) as the shared surrogate.** Don't pass `--surrogate ensemble` except to
+   reproduce old runs. **Read the baseline numbers as provisional:**
+   - the GP's lengthscale prior is mis-scaled (C4);
+   - `bo_qei` aims at the wrong target (D1);
+   - the GP reference grid has 5 seeds (G4).
+
+   Fix these and rerun the GP grid before comparing the agent with the baselines. Give every new grid
+   its own `--out` folder (D3).
 8. **Don't rebuild or overwrite the published bundles** (`m1-data-v1`, `m2m5-addon-v1`). Any data
    change becomes a new version (B9).
 
@@ -63,6 +74,8 @@ Fix-by stages, in order:
 2. **Compare:** before any agent-vs-baseline comparison.
 3. **Report:** before the M8 report.
 4. **Anytime.**
+5. **Legacy only:** affects only the legacy ensemble (`--surrogate ensemble`). Fix it only if the
+   ensemble is revived.
 
 ### A. Label safety and leakage
 
@@ -100,36 +113,45 @@ when its predictions are reported.
 
 | ID | Sev. | Issue | Where | Suggested fix | Fix by |
 |:--|:--|:--|:--|:--|:--|
-| C1 | Major | **Z-scoring sparse binary features creates fake novelty.**<br>A fingerprint bit set in 1 of 4,939 pairs becomes ≈ 70 after scaling; 44% of pairs have some input above 10. The top 0.1% of candidates by std all contain such an input. This is the cause of the "line sweep" noted in M3 §5 | `models/features.py:110,146-150` | Centre binary bits without dividing by their SD, or clip, or use fingerprint PCs. Then rerun M4 | Compare |
-| C2 | Major | **Early stopping on about 6 validation rows.**<br>At n = 32, 13 of 30 members stop after ≤ 2 epochs, essentially their random starting weights. Their disagreement is 75–90% of the variance on the top UCB candidates. The noise estimate comes from the same 6 rows | `models/response_model.py:203,236-252` | Fixed or cross-validated epoch count, then refit on all rows (or bagging); estimate noise from out-of-fold residuals | Compare |
-| C3 | Major | **The M3 coverage gate is nearly circular.** The noise is fitted so ±1.28 SD covers 80% of held-out residuals, and noise is 70–85% of the variance on random points | `models/response_model.py:249-250`, `models/calibrate.py:69` | Also report coverage on selected batches and the latent share | Compare |
-| C4 | Major | **The GP cell-lengthscale prior assumes inputs in [0, 1], but the PCs are standardized.** At n = 32, all 16 lengthscales sit at the prior mode (0.82), so the synergy cell kernel is close to the identity | `models/gp.py:136-138,172` | Normalize the PCs or rescale the prior; consider a line-baseline kernel term | Compare |
-| C5 | Minor | **Weight decay has no effect** (lr·wd = 1e-7 per step) | `models/response_model.py:229` | A real decay or dropout | Compare |
-| C6 | Minor | **`embed()` averages hidden units across members**, which aren't aligned | `models/response_model.py:296-302` | Concatenate them (changes `bo_ucb` picks) | Anytime |
-| C7 | Minor | **The member-spread variance uses ddof = 0** with 5 members | `models/response_model.py:279` | ddof = 1 | Anytime |
-| C8 | Minor | **GP:** predicted noise ignores `n_reps`, and prior variance depends on pair similarity. This drives GP uncertainty sampling to near-duplicate pairs | `models/gp.py:303-308,455` | Normalize the pair kernel | Compare |
-| C9 | Minor | **The swap test can't fail:** `pair_code` makes (A,B) and (B,A) the same integer. Symmetry still holds by construction | `models/calibrate.py:114-119`, `models/features.py:100-103` | Test the dense path with swapped rows | Anytime |
-| C10 | Minor | **Timing wording is off.** The note's "refit + full-pool scoring 11.5 s" is fit time only (scoring adds about 1.7 s). 15 of 2,000 in-campaign rounds exceeded 60 s under machine load | `m3-response-model.md`, `runs/m4_main` | Reword | Anytime |
+| C1 | Major | **Z-scoring sparse binary features creates fake novelty.**<br>A fingerprint bit set in 1 of 4,939 pairs becomes ≈ 70 after scaling; 44% of pairs have some input above 10. The top 0.1% of candidates by std all contain such an input. This is the cause of the "line sweep" noted in M3 §5 | `models/legacy/ensemble_features.py` (`pair_block`, `_standardize`) | Centre binary bits without dividing by their SD, or clip, or use fingerprint PCs. Then rerun M4 | Legacy only |
+| C2 | Major | **Early stopping on about 6 validation rows.**<br>At n = 32, 13 of 30 members stop after ≤ 2 epochs, essentially their random starting weights. Their disagreement is 75–90% of the variance on the top UCB candidates. The noise estimate comes from the same 6 rows | `models/legacy/ensemble.py` (tag `ensemble-v1`: `models/response_model.py:203,236-252`) | Fixed or cross-validated epoch count, then refit on all rows (or bagging); estimate noise from out-of-fold residuals | Legacy only |
+| C3 | Major | **The M3 coverage gate is nearly circular.** The noise is fitted so ±1.28 SD covers 80% of held-out residuals, and noise is 70–85% of the variance on random points | `models/legacy/ensemble.py` (tag `ensemble-v1`: `models/response_model.py:249-250`), `models/legacy/calibrate.py` (tag `ensemble-v1`: `models/calibrate.py:69`) | Also report coverage on selected batches and the latent share | Legacy only |
+| C4 | **Major, top GP priority** | **The GP cell-lengthscale prior assumes inputs in [0, 1], but the PCs are standardized.** At n = 32, all 16 lengthscales sit at the prior mode (0.82), so the synergy cell kernel is close to the identity | `models/gp.py:137-139,173` | Normalize the PCs or rescale the prior; consider a line-baseline kernel term | Compare |
+| C5 | Minor | **Weight decay has no effect** (lr·wd = 1e-7 per step) | `models/legacy/ensemble.py` (tag `ensemble-v1`: `models/response_model.py:229`) | A real decay or dropout | Legacy only |
+| C6 | Minor | **`embed()` averages hidden units across members**, which aren't aligned | `models/legacy/ensemble.py` (tag `ensemble-v1`: `models/response_model.py:296-302`) | Concatenate them (changes `bo_ucb` picks) | Legacy only |
+| C7 | Minor | **The member-spread variance uses ddof = 0** with 5 members | `models/legacy/ensemble.py` (tag `ensemble-v1`: `models/response_model.py:279`) | ddof = 1 | Legacy only |
+| C8 | Minor | **GP:** predicted noise ignores `n_reps`, and prior variance depends on pair similarity. This drives GP uncertainty sampling to near-duplicate pairs | `models/gp.py:304-309,456` | Normalize the pair kernel | Compare |
+| C9 | Minor | **The swap test can't fail:** `pair_code` makes (A,B) and (B,A) the same integer. Symmetry still holds by construction | `models/legacy/calibrate.py` (tag `ensemble-v1`: `models/calibrate.py:114-119`), `models/legacy/ensemble_features.py` (`pair_code`) | Test the dense path with swapped rows | Legacy only |
+| C10 | Minor | **Timing wording is off.** The note's "refit + full-pool scoring 11.5 s" is fit time only (scoring adds about 1.7 s). 15 of 2,000 in-campaign rounds exceeded 60 s under machine load | `m3-response-model.md`, `runs/m4_main` | Reword | Legacy only |
 | C11 | Minor | **Expression tertiles break ties by row order** (`rank(method="first")`). This matters for genes with many zeros in M7 | `tools/rules.py:100-106` | `method="average"`, or reject genes whose tied values cross a tertile cut | Report |
 | C12 | Minor | **The rule grammar accepts repeated or contradictory terms**, and keeps the user's lineage casing | `tools/rules.py` | Reject repeats; canonicalize | Report |
-| C13 | Minor | **The oracle's JSONL log is never enabled in campaigns**, and refusals aren't logged | `eval/runner.py:125`, `lab/oracle.py:123,230` | Pass `log_path`; log refusals | Scored run |
+| C13 | Minor | **The oracle's JSONL log is never enabled in campaigns**, and refusals aren't logged | `eval/runner.py:130`, `lab/oracle.py:123,230` | Pass `log_path`; log refusals | Scored run |
 
 ### D. M4: selectors, runner and metrics
 
 | ID | Sev. | Issue | Where | Suggested fix | Fix by |
 |:--|:--|:--|:--|:--|:--|
 | D1 | Major | **`bo_qei` improves on the best value revealed so far, not on the hit threshold.**<br>The seed-set maximum is already far above the threshold (syn max 7.0–48.6 vs 9.30), but the endpoint counts hits. Its "joint worlds" are only 5 members plus noise | `selectors/baselines.py:137-169` | Add a hit-aware acquisition (probability of hit, or EI with the threshold as reference); keep the current qEI as the literal-design variant | Compare |
-| D2 | Major | **Run manifests can't identify the code.**<br>They record `ac79169`, dirty, while M4 was not yet committed. No diff or source hash; the feature tables and the scipy version aren't recorded | `eval/runner.py:233-244` | Commit before a grid run, or record `git diff` and a hash of `src/`; hash `drugs`/`cells` | Compare |
-| D3 | Major | **Resume skips existing runs without checking settings, and overwrites the manifest** | `eval/runner.py:203-204,269-270` | Store a settings hash per run; refuse to resume on a mismatch | Compare |
-| D4 | Major | **No config file per run** (design §1, §3); grids are code presets plus CLI flags | `eval/runner.py:66-72,292-309` | A YAML or pydantic config, copied into the run folder | Compare |
+| D2 | Major | **Run manifests can't identify the code.**<br>They record `ac79169`, dirty, while M4 was not yet committed. No diff or source hash; the feature tables and the scipy version aren't recorded | `eval/runner.py:238-249` | Commit before a grid run, or record `git diff` and a hash of `src/`; hash `drugs`/`cells` | Compare |
+| D3 | Major | **Resume skips existing runs without checking settings, and overwrites the manifest** | `eval/runner.py:208-209,274-275` | Store a settings hash per run; refuse to resume on a mismatch | Compare |
+| D4 | Major | **No config file per run** (design §1, §3); grids are code presets plus CLI flags | `eval/runner.py:71-77,297-315` | A YAML or pydantic config, copied into the run folder | Compare |
 | D5 | Major | **Decision 20 and §11 are only partly met.** "With and without low-kill hits" exists only for hits@320, and the fame split only for hits@320 | `eval/metrics.py:83-94` | Compute every metric for `syn` and `syn_strict`, and by fame | Report |
-| D6 | Major | **Hit diversity counts drug pairs only**; §11 also asks for target-pair classes | `eval/metrics.py:88`, `eval/runner.py:104` | Add it (needs B5) | Report |
+| D6 | Major | **Hit diversity counts drug pairs only**; §11 also asks for target-pair classes | `eval/metrics.py:88`, `eval/runner.py:109` | Add it (needs B5) | Report |
 | D7 | Minor | **The gate reports "FAIL" with 2 seeds** even when the effect is large; p < 0.05 is unreachable at that size | `eval/metrics.py:161-171` | Report "too few seeds" | Report |
 | D8 | Minor | **Censored runs enter experiments-to-10 at 320, uncounted**; resolution is ±15 experiments | `eval/metrics.py:70-74,141` | Report the censored count; use a median or Kaplan–Meier | Report |
-| D9 | Minor | **Selection seed `sum(map(ord, name))`**: anagram names collide | `eval/runner.py:127` | `zlib.crc32` | Anytime |
-| D10 | Minor | **UCB uses predictive std (model + noise)**, not model uncertainty alone | `models/response_model.py:86-87,279` | Sensitivity run with `latent_std` | Compare |
-| D11 | Minor | **`--workers` sets thread variables after numpy is imported** (a problem on Linux with fork) | `eval/runner.py:277-279` | spawn context or `threadpoolctl` | Anytime |
+| D9 | Minor | **Selection seed `sum(map(ord, name))`**: anagram names collide | `eval/runner.py:132` | `zlib.crc32` | Anytime |
+| D10 | Minor | **UCB uses predictive std (model + noise)**, not model uncertainty alone (both surrogates) | `models/prediction.py` (`Prediction.std`) | Sensitivity run with `latent_std` | Compare |
+| D11 | Minor | **`--workers` sets thread variables after numpy is imported** (a problem on Linux with fork) | `eval/runner.py:282-284` | spawn context or `threadpoolctl` | Anytime |
 | D12 | Minor | **Seed-set hits aren't in `report.md`** | `eval/metrics.py:174-201` | Add a column | Report |
+
+### G. The GP surrogate (default since 2026-11-26)
+
+| ID | Sev. | Issue | Where | Suggested fix | Fix by |
+|:--|:--|:--|:--|:--|:--|
+| G1 | Major | **The GP has never run the formal M3 gate** (80% coverage on the 80/20 sanity split, swap test, refit < 60 s). `calibrate.py` is ensemble-only (`models/legacy/`). The evidence so far is in-campaign: ±1σ covers 68–70% on random probes, and fits take seconds | `models/legacy/calibrate.py` | A GP version of the calibration report (or make `calibrate` surrogate-agnostic) | Compare |
+| G2 | Major | **The GP concentrates picks in a few responsive lines.** GP greedy (killing) puts 98% of its picks in one line, and GP `bo_ucb` (killing) finds hits in 10 lines vs 18 for the ensemble. Hit counts reward this | `gp-surrogate.md` §9.4 | Report distinct hit pairs and lines covered next to hits (with D6); consider a per-line cap | Compare |
+| G3 | Major | **The GP's synergy advantage is not established**: a tie within noise (§9.1), and `bo_ts` is worse. The comparison recommended the GP for killing only, until C4 is fixed and re-raced | `gp-surrogate.md` §9.1, §10 | Re-race synergy after C4 | Compare |
+| G4 | Minor | **The GP reference grid has seeds 0–4 only.** Its outputs (`runs/gp_compare/`) are not in git, and its `random` arm is reused from the ensemble grid (`random` uses no surrogate) | `runs/gp_compare/` | Run `--grid main --out runs/m4_gp_main` on seeds 0–9 after C4 | Compare |
 
 ### E. M5: literature, leakage filter and probe
 

@@ -1,7 +1,17 @@
 # M4: baselines, campaign runner and metrics
 
-> **Numbers provisional (2026-11-26).** The baselines share a response model with known problems (C1,
-> C2), and `bo_qei` improves on the best value revealed so far rather than on the hit threshold (D1).
+> **Surrogate changed (2026-11-26).** The runner's default surrogate is now the **Gaussian process**
+> ([`gp-surrogate.md`](gp-surrogate.md)).
+> - `runs/m4_main` and every number below were made with the ensemble, now the legacy build
+>   (`--surrogate ensemble`; tag `ensemble-v1`).
+> - **GP reference numbers** (hits @320, seeds 0–4): `bo_ucb` 94.0 synergy / 202.2 killing; `greedy`
+>   91.8 / 186.0; `random` 16.2 / 15.2.
+> - **Not yet done:** a 10-seed GP grid; run it after the GP prior fix (C4).
+> - **Always give a new `--out` for the GP**: resume skips any existing run file without checking its
+>   surrogate (D3).
+
+> **Numbers provisional (2026-11-26).** The legacy ensemble has known problems (C1, C2), and `bo_qei`
+> improves on the best value revealed so far rather than on the hit threshold (D1).
 > Resume doesn't check settings (D3), and synergy metrics are mostly reported without the low-kill
 > exclusion (D5). Fix these and rerun M4 before comparing the agent with the baselines. See
 > [`known-issues.md`](known-issues.md).
@@ -108,11 +118,11 @@ All commands are from the repo root. They need the M1 bundle plus the M2 outputs
 
 | Step | Command | Estimated time on the M1 MacBook Air |
 |:--|:--|:--|
-| 1. Pilot (compact features, seeds 0–1) | `uv run python -m combo_agent.eval.runner --grid pilot --out runs/m4_pilot` | ~15–20 min |
-| 2. Main grid (full features, seeds 0–9, 100 campaigns) | `uv run python -m combo_agent.eval.runner --grid main --out runs/m4_main` | ~6–7 h (80 model campaigns × 20 refits × ~13 s); overnight. `--mode compact` ≈ 2 h |
+| 1. Pilot (seeds 0–1; reproducing `runs/m4_pilot` needs `--surrogate ensemble`) | `uv run python -m combo_agent.eval.runner --grid pilot --surrogate ensemble --out runs/m4_pilot` | ~15–20 min |
+| 2. Main grid (seeds 0–9, 100 campaigns). **GP (default):** `--grid main --out runs/m4_gp_main` (a new folder; about 5–7 min per GP campaign). **Reproduce the legacy grid:** | `uv run python -m combo_agent.eval.runner --grid main --surrogate ensemble --out runs/m4_main` | ~6–7 h (80 model campaigns × 20 refits × ~13 s); overnight. `--mode compact` ≈ 2 h |
 | 3. Metrics and gate | `uv run python -m combo_agent.eval.metrics runs/m4_main` | seconds |
 | 4. Figures | `uv run --isolated --no-project --python 3.12 --with matplotlib==3.9.2 --with pandas==2.3.3 --with pyarrow==25.0.1 --with numpy==1.26.4 python -I scripts/make_m4_figures.py runs/m4_main` | seconds |
-| 5. Ablation (optional) | `uv run python -m combo_agent.eval.runner --grid ablation --out runs/m4_ablation` | ~5–6 h |
+| 5. Ablation (optional; GP by default) | `uv run python -m combo_agent.eval.runner --grid ablation --out runs/m4_gp_ablation` | ~5–6 h |
 
 The time estimates come from the M3 timings (refit + scoring 11.5 s in full mode, 3.7 s in
 compact) plus selection overhead; they are **unverified** until the pilot runs. `--workers 2`

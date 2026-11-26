@@ -5,10 +5,11 @@ Background and decision records for milestones M1–M5. Start with
 
 | Read in this order | What it covers |
 |:--|:--|
+| [gp-surrogate.md](gp-surrogate.md) | **The main surrogate (default since 2026-11-26):** the Gaussian process. How it works, the 100-campaign race against the ensemble, calibration, line concentration, what's left. The ensemble is the legacy build |
 | [known-issues.md](known-issues.md) | **Read first if you build the agent:** the agent-builder rules, and every known issue in M1–M5 with severity, location and "fix by" stage |
 | [m5-literature.md](m5-literature.md) | **M5:** `search_literature`, the leakage rules and blocklist, the leakage gate result, and the zero-shot memory probe (what the LLM already knows, and its synergy/potency confusion) |
 | [m4-baselines.md](m4-baselines.md) | **M4 (run 2026-11-24, gate passed):** the baseline selectors, the campaign runner, metrics, the gate, and the commands to run the grids. Results: `runs/m4_main/report.md` |
-| [m3-response-model.md](m3-response-model.md) | **M3:** the response model: inputs, how uncertainty is computed (and why not the design's way), calibration results, a warning for M4 |
+| [m3-response-model.md](m3-response-model.md) | **M3 (legacy build, the ensemble):** the response model: inputs, how uncertainty is computed (and why not the design's way), calibration results, a warning for M4 |
 | [m2-oracle.md](m2-oracle.md) | **M2:** the oracle (simulated lab) and its refusal rules, seed sets, famous/middle/obscure pair labels from PubMed, the label-access test |
 | [m1-freeze-and-splits.md](m1-freeze-and-splits.md) | **Results summary:** the data funnel, all 20 decisions, the held-out split, hit thresholds, caveats, frozen files, figures |
 | [m1-implementation.md](m1-implementation.md) | **The decision log and engineering notes**, per step (1a–1g), with verified numbers. Code comments cite its decision numbers |

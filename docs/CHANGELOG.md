@@ -3,6 +3,37 @@
 Newest first. Decision numbers refer to the table in
 [`project-notes/m1-freeze-and-splits.md`](project-notes/m1-freeze-and-splits.md) §2.
 
+## 2026-11-26: the Gaussian process becomes the main surrogate; the ensemble is the legacy build
+
+Details: [`project-notes/gp-surrogate.md`](project-notes/gp-surrogate.md).
+
+- **Default surrogate is now the GP** (`models/gp.py`) for every campaign:
+  - `--surrogate` defaults to `gp` in `eval/runner.py` (CLI, `run_campaign`, `run_one`, `run_grid`,
+    `write_manifest`);
+  - `SURROGATES = ("gp", "ensemble")`;
+  - a new test pins the default.
+- **Why** (100 campaigns, seeds 0–4):
+  - killing: the GP finds 1.8–3.3× the ensemble's hits with every BO rule, on 5/5 seeds (`bo_ucb`
+    202.2 vs 60.8);
+  - calibration: the GP's error bars are honest (±1σ covers 68–70% vs 84–87%);
+  - synergy: a tie.
+- **The ensemble is the legacy build:**
+  - **New location:** `models/legacy/` (`ensemble.py`, `ensemble_features.py`, `calibrate.py`); it runs
+    only with `--surrogate ensemble`.
+  - **Git tag** `ensemble-v1` marks its last state as the default. `runs/m4_main` was made with it.
+  - **Shared code:** `Prediction` and `cosine_similarity` moved verbatim to `models/prediction.py`;
+    `models/features.py` keeps only the shared helpers.
+  - **Tests:** `tests/test_response_model.py` is now `tests/test_legacy_ensemble.py`.
+- **No numbers changed** (verified): `bo_ucb` × synergy × seed 0 rerun with the new default is
+  row-for-row identical to `runs/gp_compare/gp`, and with `--surrogate ensemble` identical to
+  `runs/m4_main`. Tests: 204 passed, 30 skipped; M2–M5 real-data tests 109 passed.
+- **Known issues re-tiered:**
+  - ensemble-only items are marked "Legacy only";
+  - GP issues are C4 (prior scaling, now top priority), C8, and new G1–G4: no formal GP M3 gate, line
+    concentration, synergy advantage not established, a 5-seed reference grid only.
+- **Run new grids into new folders** (for example `--out runs/m4_gp_main`): resume skips existing files
+  without checking the surrogate (D3).
+
 ## 2026-11-26: M2–M5 handoff; code review; M2/M5 add-on data bundle
 
 - **Code review of M1–M5** against the design. Results in

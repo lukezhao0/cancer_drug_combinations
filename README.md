@@ -27,8 +27,8 @@ The full specification is in [`docs/target_design.md`](docs/target_design.md).
 | M0 Scaffolding (package, CLI, SHELDON pin) | ✅ |
 | **M1 Data and pool** | ✅ **Done**: 272,357 experiments (4,939 drug pairs × 57 cell lines, 101 drugs), features, held-out split, hit thresholds, frozen |
 | **M2 Oracle and splits** | ✅ **Done**: `Oracle` (budget, batch, held-out and re-run refusals), 10 seed sets of 32, famous/middle/obscure pair labels from PubMed, label-access test |
-| **M3 Response model** | ✅ **Done**: 5-member deep ensemble (numpy), symmetric in drug order, calibrated 80% intervals at 32–352 rows; refit + full-pool scoring in 3.7–11.5 s |
-| **M4 Baselines and runner** | ✅ **Run, gate passed**: 5 selectors (random, greedy, uncertainty, diverse `bo_ucb`, MC `bo_qei`), 100 campaigns. `bo_ucb` finds 3–4× more hits than random at 320; `greedy` is strongest. Report: `runs/m4_main/report.md`. **Numbers provisional:** known response-model and `bo_qei` problems (known-issues C1, C2, D1) are to be fixed and M4 rerun before agent comparisons |
+| **M3 Response model** | ✅ **Done. The main surrogate is a Gaussian process** (`models/gp.py`; default since 2026-11-26): Tanimoto drug-pair kernel × cell kernel. Over 5 seeds it finds about 3× the ensemble's killing hits with every BO rule, and its error bars are honest; synergy is a tie. See [`gp-surrogate.md`](docs/project-notes/gp-surrogate.md). The first model, a 5-network ensemble, is the **legacy build** (`models/legacy/`, git tag `ensemble-v1`) |
+| **M4 Baselines and runner** | ✅ **Run, gate passed**: 5 selectors (random, greedy, uncertainty, diverse `bo_ucb`, MC `bo_qei`), 100 campaigns. `bo_ucb` finds 3–4× more hits than random at 320; `greedy` is strongest. Report: `runs/m4_main/report.md` (made with the **legacy ensemble**). With the GP (seeds 0–4), `bo_ucb` finds 94.0 synergy / 202.2 killing hits at 320 vs 16.2 / 15.2 for random. **Numbers provisional:** fix the GP prior scaling and `bo_qei` (known-issues C4, D1), then rerun the M4 grid with the GP before agent comparisons |
 | **M5 Retrieval and leakage filter** | ✅ **Built**: `search_literature` with a 6-rule leakage filter, a 607-PMID blocklist and a per-call audit log; gate test set 23/23 leaky papers blocked. Memory probe: the LLM shows no memory of synergy results (ρ −0.05) |
 | M7 Explanations · M8 Full grid and report | ⬜ |
 | M6 Agent | 🟨 in-silico lookup tools built (`src/combo_agent/tools/`); agent loop not started |
@@ -173,7 +173,8 @@ src/combo_agent/
   data/                  # M1 data pipeline, steps 1a-1g (see docs/HANDOFF.md)
     curated/             # hand-reviewed tables (drug synonyms, cell lines, PubMed terms)
   lab/                   # M2: oracle.py (the simulated lab), splits.py (seed sets, pair fame)
-  models/                # M3: features.py, response_model.py (ensemble), calibrate.py (report)
+  models/                # M3: gp.py (the default surrogate), surrogate.py (interface), prediction.py;
+                         #     legacy/ (the first surrogate, a 5-network ensemble, kept to reproduce old runs)
   selectors/             # M4: baseline selectors (random, greedy, uncertainty, bo_ucb, bo_qei)
   eval/                  # M4: campaign runner (resumable grids) and metrics/statistics; M5 probe scoring
   literature/            # M5: PubMed client, leakage filter, search_literature, memory probe

@@ -1,6 +1,15 @@
-# M3: the response model
+# M3: the response model (the ensemble, now the legacy build)
 
-> **Known issues (2026-11-26), not yet fixed; see [`known-issues.md`](known-issues.md):**
+> **Superseded (2026-11-26).** The main surrogate is now the **Gaussian process**
+> ([`gp-surrogate.md`](gp-surrogate.md)). The ensemble described here is the **legacy build**:
+> - code in `src/combo_agent/models/legacy/` (`ensemble.py`, `ensemble_features.py`, `calibrate.py`);
+> - run only with `--surrogate ensemble`;
+> - git tag `ensemble-v1` marks its last state as the default.
+>
+> It is kept because `runs/m4_main` and the ensemble arm of the GP comparison were made with it. The
+> paths below were updated to the legacy locations.
+
+> **Known issues (2026-11-26), legacy only, not fixed; see [`known-issues.md`](known-issues.md):**
 > - **C1:** z-scoring the sparse fingerprint bits gives some inputs values near 70. Those candidates
 >   look novel and get large std; this is the cause of the §5 "line sweep".
 > - **C2:** at campaign sizes, members early-stop on about 6 validation rows, and many stop after 1–2
@@ -11,7 +20,7 @@
 > Status 2026-11-23: **M3 complete.** Gate passed: 80% intervals cover 85–89% on the 80/20 sanity
 > split (gate 70–90%); predictions don't change when drug A and B are swapped (difference exactly
 > 0); a refit plus scoring the whole pool takes 3.7 s (compact) or 11.5 s (full), against a 60 s
-> limit. Code: `src/combo_agent/models/`. Report: `artifacts/m3/m3_report.md`.
+> limit. Code: `src/combo_agent/models/legacy/` (originally `models/`). Report: `artifacts/m3/m3_report.md`.
 
 ## 1. What the model is for
 
@@ -130,7 +139,7 @@ sensitivity check. `EnsembleModel.embed()` provides the embedding for the penalt
 
 ```python
 from combo_agent.lab.oracle import Oracle
-from combo_agent.models.response_model import EnsembleModel
+from combo_agent.models.legacy.ensemble import EnsembleModel
 
 oracle = Oracle.from_cache(seed=0)
 model = EnsembleModel(seed=0)                 # mode="full"; FeatureSet built once and reused
@@ -141,8 +150,8 @@ scores = pred.ucb("syn", beta=2.0)
 ```
 
 `fit` accepts only the oracle's `Result` objects, so a selector can't hand it labels from
-anywhere else. The calibration script (`python -m combo_agent.models.calibrate`; the 80/20 fits alone take ~3–4 min per mode) is
-evaluation code and is on the label allowlist; `features.py` and `response_model.py` are not.
+anywhere else. The calibration script (`python -m combo_agent.models.legacy.calibrate`; the 80/20 fits alone take ~3–4 min per mode) is
+evaluation code and is on the label allowlist; `legacy/ensemble_features.py` and `legacy/ensemble.py` are not.
 
 ## 7. Not done / next
 
