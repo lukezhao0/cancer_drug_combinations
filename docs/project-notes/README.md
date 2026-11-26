@@ -1,9 +1,15 @@
-# Project notes (M1)
+# Project notes (M1–M5)
 
-Background and decision records for milestone M1. Start with [`../HANDOFF.md`](../HANDOFF.md).
+Background and decision records for milestones M1–M5. Start with
+[`../HANDOFF-m2-m5.md`](../HANDOFF-m2-m5.md); the M1 handoff is [`../HANDOFF.md`](../HANDOFF.md).
 
 | Read in this order | What it covers |
 |:--|:--|
+| [known-issues.md](known-issues.md) | **Read first if you build the agent:** the agent-builder rules, and every known issue in M1–M5 with severity, location and "fix by" stage |
+| [m5-literature.md](m5-literature.md) | **M5:** `search_literature`, the leakage rules and blocklist, the leakage gate result, and the zero-shot memory probe (what the LLM already knows, and its synergy/potency confusion) |
+| [m4-baselines.md](m4-baselines.md) | **M4 (run 2026-11-24, gate passed):** the baseline selectors, the campaign runner, metrics, the gate, and the commands to run the grids. Results: `runs/m4_main/report.md` |
+| [m3-response-model.md](m3-response-model.md) | **M3:** the response model: inputs, how uncertainty is computed (and why not the design's way), calibration results, a warning for M4 |
+| [m2-oracle.md](m2-oracle.md) | **M2:** the oracle (simulated lab) and its refusal rules, seed sets, famous/middle/obscure pair labels from PubMed, the label-access test |
 | [m1-freeze-and-splits.md](m1-freeze-and-splits.md) | **Results summary:** the data funnel, all 20 decisions, the held-out split, hit thresholds, caveats, frozen files, figures |
 | [m1-implementation.md](m1-implementation.md) | **The decision log and engineering notes**, per step (1a–1g), with verified numbers. Code comments cite its decision numbers |
 | [depmap-data.md](depmap-data.md) | Cell-line data sources (DepMap 26Q3, NCI CellMiner): what each file is, checksums, the cross-source validation, and the SR imputation |
