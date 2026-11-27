@@ -3,16 +3,13 @@
 CS 224V project: an agent that combines literature evidence and in-silico experiments to choose
 cancer drug-combination experiments. Built on [SHELDON](https://github.com/stanford-oval/sheldon).
 
-**New here? Read [`docs/HANDOFF-m2-m5.md`](docs/HANDOFF-m2-m5.md) first** (current state, and where
-the agent plugs in), then [`docs/project-notes/known-issues.md`](docs/project-notes/known-issues.md).
-**Anyone building the agent must follow the "Agent-builder rules" at the top of the known-issues file.**
-The M1 handoff, [`docs/HANDOFF.md`](docs/HANDOFF.md), covers the data pipeline.
+**Remaining work is described at [`docs/HANDOFF-m2-m5.md`](docs/HANDOFF-m2-m5.md) first** (current state, and where
+the agent plugs in), then [`docs/project-notes/known-issues.md`](docs/project-notes/known-issues.md) for relevant issues still needed to be addressed.
 
-## The goal in one paragraph
-
-Testing every pair of cancer drugs on every cell line is impossible, so labs choose experiments in
-small batches. We build a **simulated lab**: a frozen table of real drug-combination measurements
+Key goal: testing every pair of cancer drugs on every cell line is impossible, so labs choose experiments in
+small batches. We build a simulated lab: a frozen table of real drug-combination measurements
 (the NCI-ALMANAC screen) whose results stay hidden until "run". Then we ask two questions:
+
 1. Can an agent that reasons about drug mechanisms find strong combinations **in fewer
    experiments** than random selection, uncertainty sampling and Bayesian optimization?
 2. Do the mechanisms it proposes make **correct predictions** about which held-out cell lines
@@ -22,16 +19,16 @@ The full specification is in [`docs/target_design.md`](docs/target_design.md).
 
 ## Status
 
-| Milestone | Status |
-|:--|:--|
-| M0 Scaffolding (package, CLI, SHELDON pin) | ✅ |
-| **M1 Data and pool** | ✅ **Done**: 272,357 experiments (4,939 drug pairs × 57 cell lines, 101 drugs), features, held-out split, hit thresholds, frozen |
-| **M2 Oracle and splits** | ✅ **Done**: `Oracle` (budget, batch, held-out and re-run refusals), 10 seed sets of 32, famous/middle/obscure pair labels from PubMed, label-access test |
-| **M3 Response model** | ✅ **Done. The main surrogate is a Gaussian process** (`models/gp.py`; default since 2026-11-26): Tanimoto drug-pair kernel × cell kernel. Over 5 seeds it finds about 3× the ensemble's killing hits with every BO rule, and its error bars are honest; synergy is a tie. See [`gp-surrogate.md`](docs/project-notes/gp-surrogate.md). The first model, a 5-network ensemble, is the **legacy build** (`models/legacy/`, git tag `ensemble-v1`) |
-| **M4 Baselines and runner** | ✅ **Run, gate passed**: 5 selectors (random, greedy, uncertainty, diverse `bo_ucb`, MC `bo_qei`), 100 campaigns. `bo_ucb` finds 3–4× more hits than random at 320; `greedy` is strongest. Report: `runs/m4_main/report.md` (made with the **legacy ensemble**). With the GP (seeds 0–4), `bo_ucb` finds 94.0 synergy / 202.2 killing hits at 320 vs 16.2 / 15.2 for random. **Numbers provisional:** fix the GP prior scaling and `bo_qei` (known-issues C4, D1), then rerun the M4 grid with the GP before agent comparisons |
-| **M5 Retrieval and leakage filter** | ✅ **Built**: `search_literature` with a 6-rule leakage filter, a 607-PMID blocklist and a per-call audit log; gate test set 23/23 leaky papers blocked. Memory probe: the LLM shows no memory of synergy results (ρ −0.05) |
-| M7 Explanations · M8 Full grid and report | ⬜ |
-| M6 Agent | 🟨 in-silico lookup tools built (`src/combo_agent/tools/`); agent loop not started |
+| Milestone                                  | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| :----------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 Scaffolding (package, CLI, SHELDON pin) | ✅                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **M1 Data and pool**                       | ✅ **Done**: 272,357 experiments (4,939 drug pairs × 57 cell lines, 101 drugs), features, held-out split, hit thresholds, frozen                                                                                                                                                                                                                                                                                                                                                                                             |
+| **M2 Oracle and splits**                   | ✅ **Done**: `Oracle` (budget, batch, held-out and re-run refusals), 10 seed sets of 32, famous/middle/obscure pair labels from PubMed, label-access test                                                                                                                                                                                                                                                                                                                                                                    |
+| **M3 Response model**                      | ✅ **Done. The main surrogate is a Gaussian process** (`models/gp.py`; default since 2026-11-26): Tanimoto drug-pair kernel × cell kernel. Over 5 seeds it finds about 3× the ensemble's killing hits with every BO rule, synergy is a tie. See [`gp-surrogate.md`](docs/project-notes/gp-surrogate.md). The first attempt at building the surrogate model, a 5-network ensemble, is the **legacy build** (`models/legacy/`, git tag `ensemble-v1`)                                                                          |
+| **M4 Baselines and runner**                | ✅ **Partially done**: 5 selectors (random, greedy, uncertainty, diverse `bo_ucb`, MC `bo_qei`), 100 campaigns. `bo_ucb` finds 3–4× more hits than random at 320; `greedy` is strongest. Report: `runs/m4_main/report.md` (made with the **legacy ensemble**). With the GP (seeds 0–4), `bo_ucb` finds 94.0 synergy / 202.2 killing hits at 320 vs 16.2 / 15.2 for random. **Numbers provisional:** fix the GP prior scaling and `bo_qei` (known-issues C4, D1), then rerun the M4 grid with the GP before agent comparisons |
+| **M5 Retrieval and leakage filter**        | ✅ **Built**: `search_literature` with a 6-rule leakage filter, a 607-PMID blocklist and a per-call audit log; gate test set 23/23 leaky papers blocked. Memory probe: the LLM shows no memory of synergy results (ρ −0.05)                                                                                                                                                                                                                                                                                                  |
+| M6 Agent                                   | 🟨 in-silico lookup tools built (`src/combo_agent/tools/`); agent loop not started                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| M7 Explanations · M8 Full grid and report  | ⬜                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 Summaries: M1 [`docs/project-notes/m1-freeze-and-splits.md`](docs/project-notes/m1-freeze-and-splits.md) ·
 M2 [`docs/project-notes/m2-oracle.md`](docs/project-notes/m2-oracle.md) ·
@@ -81,11 +78,11 @@ uv run combo-agent ls  # Lists benchmarks, methods and engines
 The frozen M1 data (about 24 MB compressed) is shared as a documented bundle, **`m1-data-v1.tgz`**.
 It's not kept in git.
 
-| | |
-|:--|:--|
-| **Download** | [Google Drive folder](https://drive.google.com/drive/folders/1GsulBMNAGEjXhBt8p-UvNpYufTfvvRW7?usp=drive_link) (ask the team for access) |
-| **`m1-data-v1.tgz` sha256** | `bd33234e3cf63af3221de6a828b246b0f3a599a69a8088d8af8e65878f4da65b` |
-| **`m1_api_cache.tgz` sha256** (optional, for exact rebuilds) | `b7577a54a36e1a9330f380fab2c7defa198636a877c1f97cbfcc1c76080272af` |
+|                                                              |                                                                                                                                          |
+| :----------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| **Download**                                                 | [Google Drive folder](https://drive.google.com/drive/folders/1GsulBMNAGEjXhBt8p-UvNpYufTfvvRW7?usp=drive_link) (ask the team for access) |
+| **`m1-data-v1.tgz` sha256**                                  | `bd33234e3cf63af3221de6a828b246b0f3a599a69a8088d8af8e65878f4da65b`                                                                       |
+| **`m1_api_cache.tgz` sha256** (optional, for exact rebuilds) | `b7577a54a36e1a9330f380fab2c7defa198636a877c1f97cbfcc1c76080272af`                                                                       |
 
 ```bash
 shasum -a 256 ~/Downloads/m1-data-v1.tgz                       # must match the sha256 above
@@ -119,6 +116,7 @@ All data lives in `data_cache/`, which git ignores. Every download is pinned by 
    - `PortalOmicsCNGeneLog2.csv`
 
    Their checksums are in [`docs/project-notes/depmap-data.md`](docs/project-notes/depmap-data.md).
+
 2. **Optional, for an identical offline rebuild:** unpack the shared API-response archive
    (`m1_api_cache.tgz`, about 12 MB, ask the team) into `data_cache/raw/`. Without it, steps 1c/1d
    query ChEMBL, PubChem and Cellosaurus live.
